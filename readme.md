@@ -103,28 +103,28 @@ const char* miniopt.what();
 
 ## Support option features.
 1. Short options that all have no arguments can concatenate with each other. For example:  
-	```
+    ```
     foo -a -b -c  
     foo -abc  
-	```
+    ```
 2. A short option that have an argument can concatenate with its argument. For example:  
-	```
+    ```
     foo -D _DEBUG
     foo -D=_DEBUG
-    foo -D_DEBUG  	## If this option have both means of clause 1 and clause 2, 
-					## this clause 2 will take effect first, so it won't be 
-					## seen as "foo -D -_ -D -E -B -U -G".
-	```
+    foo -D_DEBUG    ## If this option have both means of clause 1 and clause 2, 
+                    ## this clause 2 will take effect first, so it won't be 
+                    ## seen as "foo -D -_ -D -E -B -U -G".
+    ```
 3. A long option that have an argument can concatenate with its argument. For example:  
     ```
-	foo --define USING_DEBUG  
-	foo --define=USING_DEBUG  
-	```
+    foo --define USING_DEBUG  
+    foo --define=USING_DEBUG  
+    ```
 4. The token "--" is reserved as **non option argument marker**. it means all string(s) after which will be seen as **non option argument**(s). For example:  
     ```bash
     $> rm -f       ## You can not delete a file name "-f" by this command,
-	$> rm -- -f    ## but you can delete the file by this command.
-	```
+    $> rm -- -f    ## but you can delete the file by this command.
+    ```
 
 # References  
  
