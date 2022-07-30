@@ -13,15 +13,20 @@
 
 int main(int argc, char *argv[]) {
     option options[] = {
-        {'a',  "append", "<file>  append file." , opt_has_arg}, // -a, --append
-        {'r',  "remove", "<file>  remove file." , opt_has_arg}, // -r, --remove
-        {'\0', "debug" , "        enable debug.", opt_no_arg},  //     --debug
-        {'h',  "help"  , "        show help."   , opt_no_arg},  // -h, --help
-        {'v',  ""      , "        show version.", opt_no_arg}   // -v
+        {'a', "append", "<file>", "append file."},  // -a, --append
+        {'r', "remove", "<file>", "remove file."},  // -r, --remove
+        {'h', "help", nil, "show help."},           // -h, --help
+        {nil, "debug", nil, "enable debug."},       //     --debug
+        {'v', nil, nil, "show version with"         // -v
+                        "<br>comment line 2."
+        }
     };
-
     const int optsum = sizeof(options) / sizeof(options[0]);
-    miniopt.init(argc, argv, options, optsum);
+
+    if (miniopt.init(argc, (char **)argv, options, optsum) != 0) {
+        printf("error: %s\n", miniopt.what());
+        return 0;
+    }
 
     int status;
     while ((status = miniopt.getopt()) > 0) {
@@ -29,15 +34,15 @@ int main(int argc, char *argv[]) {
         switch (id) {
             case 0:    // -a, --append
             case 1:    // -r, --remove
-            case 2:    //     --debug
-            case 3:    // -h, --help
+            case 2:    // -h, --help
+            case 3:    //     --debug
             case 4:    // -v
                 printf("[option]\n  ");
                 printf("optin-index = [%d] ", id);
-                if(options[id].sname != '\0'){
+                if (options[id].sname) {
                     printf("short-name = [%c]  ", options[id].sname);
                 }
-                if(options[id].lname[0] != '\0'){
+                if (options[id].lname) {
                     printf("long-name = [%s]  ", options[id].lname);
                 }
                 if (miniopt.optarg()) {
@@ -51,9 +56,9 @@ int main(int argc, char *argv[]) {
         }
     }
 
-    if(status < 0) printf("error: %s\n", miniopt.what());
+    if (status < 0) printf("error: %s\n", miniopt.what());
 
-    printf("\n[print-options]\n");
+    printf("\nOptions:\n");
     miniopt.printopts(printf, 2);
 
     return status;

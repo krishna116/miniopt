@@ -7,13 +7,19 @@
  * file that was distributed with this source code.
  */
 
+/**
+ * @brief miniopt library implementation.
+ */
+
 #include "miniopt.h"
 
-#ifndef NULL
-#define NULL 0
+//#define DEBUG
+#ifdef DEBUG
+#include <stdio.h>
+#define dbg(x) printf(x);
+#else
+#define dbg(x) 
 #endif
-
-#define MAX_ERROR_STR_SIZE 128
 
 /**
  * @brief option_context state.
@@ -103,7 +109,7 @@ int miniopt_concat(char *buf, int bufsz, const char *s1, const char *s2,
     int i = 0;
     for (int j = 0; j < strArraySize; ++j) {
         const char *s = strArray[j];
-        if (s == NULL) continue;
+        if (s == nil) continue;
         if (i >= bufsz) break;
         while (i < bufsz && *s) { buf[i++] = *s++; }
     }
@@ -128,14 +134,14 @@ int miniopt_concat(char *buf, int bufsz, const char *s1, const char *s2,
  * @param[in] s3    Input string3
  */
 void miniopt_make_error(const char *s1, const char *s2, const char *s3) {
-    static char error[MAX_ERROR_STR_SIZE];
+    static char error[ERROR_STR_MAX_SIZE];
 
-    miniopt_assert(!(s1 == NULL && s2 == NULL && s3 == NULL));
+    miniopt_assert(!(s1 == nil && s2 == nil && s3 == nil));
 
-    if (s1 == NULL && s2 == NULL && s3 == NULL) {
+    if (s1 == nil && s2 == nil && s3 == nil) {
         error[0] = '\0';
     } else {
-        miniopt_concat(error, MAX_ERROR_STR_SIZE, s1, s2, s3);
+        miniopt_concat(error, ERROR_STR_MAX_SIZE, s1, s2, s3);
     }
 
     optctx.error = error;
@@ -145,44 +151,59 @@ void miniopt_make_error(const char *s1, const char *s2, const char *s3) {
 /**
  * @brief Peek next token.
  * 
- * @return NOT_NULL     Next token.
- * @return NULL         No more token exist. 
+ * @return NOT_nil     Next token.
+ * @return nil         No more token exist. 
  */
 const char *miniopt_peek_next_token() {
     miniopt_assert(optctx.argc > 0);
-    miniopt_assert(optctx.argv != NULL);
+    miniopt_assert(optctx.argv != nil);
 
     if (optctx.argc <= 1) { // Only one arg is the file path, skip it.
-        return NULL;
+        return nil;
     } else if (optctx.index == -1) { // It is first time to peek token.
         return optctx.argv[1];
     } else if ((optctx.index + 1) < optctx.argc) { // Not first time.
         return optctx.argv[optctx.index + 1];
     } else {
-        return NULL; // No more tokens.
+        return nil; // No more tokens.
     }
 }
 
 /**
  * @brief Get next token.
  * 
- * @return NOT_NULL     Next token.
- * @return NULL         No more token to get. 
+ * @return NOT_nil     Next token.
+ * @return nil         No more token to get. 
  */
 const char *miniopt_get_next_token() {
     miniopt_assert(optctx.argc > 0);
-    miniopt_assert(optctx.argv != NULL);
+    miniopt_assert(optctx.argv != nil);
 
     if (optctx.argc <= 1) { // Only one arg is the file path, skip it.
-        return NULL;
+        return nil;
     } else if (optctx.index == -1) { // It is first time to get token.
         optctx.index = 1;
         return optctx.argv[optctx.index];
     } else if (++optctx.index < optctx.argc) { // Not first time.
         return optctx.argv[optctx.index];
     } else {
-        return NULL; // No more tokens.
+        return nil; // No more tokens.
     }
+}
+
+/**
+ * @brief Check whether an option has or requires an argument.
+ * 
+ * @param[in] opt   Input option to check.
+ * 
+ * @return 0        It has no argument.
+ * @return 1        It has an argument.
+ */
+int miniopt_opt_has_arg(option* opt)
+{
+    miniopt_assert(opt != nil);
+
+    return opt->ahint != nil;
 }
 
 /**
@@ -196,8 +217,8 @@ const char *miniopt_get_next_token() {
  * @return 0            It is not short option.
  */
 int miniopt_is_short_option(char c, int *hasArg, int *optind) {
-    miniopt_assert(hasArg != NULL);
-    miniopt_assert(optind != NULL);
+    miniopt_assert(hasArg != nil);
+    miniopt_assert(optind != nil);
 
     if (c == '-' || c == '=' || c == 0) return 0;
 
@@ -205,7 +226,7 @@ int miniopt_is_short_option(char c, int *hasArg, int *optind) {
     *optind = optctx.optsum;
     for (int i = 0; i < optctx.optsum; ++i) {
         if (optctx.opts[i].sname == c) {
-            if (optctx.opts[i].type == opt_has_arg) *hasArg = 1;
+            *hasArg = miniopt_opt_has_arg(&(optctx.opts[i]));
             *optind = i;
             return 1;
         }
@@ -225,9 +246,9 @@ int miniopt_is_short_option(char c, int *hasArg, int *optind) {
  * @return 0        They are not the same.
  */
 int miniopt_is_same(const char *beg, const char *end, const char *str) {
-    miniopt_assert(beg != NULL);
-    miniopt_assert(end != NULL);
-    miniopt_assert(str != NULL);
+    miniopt_assert(beg != nil);
+    miniopt_assert(end != nil);
+    miniopt_assert(str != nil);
 
     while (beg < end && *beg == *str) {
         ++beg;
@@ -242,7 +263,7 @@ int miniopt_is_same(const char *beg, const char *end, const char *str) {
  * 
  * @param[in] beg       Input string begin.
  * @param[in] end       Input string end.
- * @param[out] hasArg   Whether this option need argument.
+ * @param[out] hasArg   Whether this option requires an argument.
  * @param[out] optind   Option index to the option array.
  * 
  * @return 1            It is long option.
@@ -250,17 +271,18 @@ int miniopt_is_same(const char *beg, const char *end, const char *str) {
  */
 int miniopt_is_long_option(const char *beg, const char *end, int *hasArg,
                            int *optind) {
-    miniopt_assert(beg != NULL);
-    miniopt_assert(end != NULL);
-    miniopt_assert(hasArg != NULL);
-    miniopt_assert(optind != NULL);
+    miniopt_assert(hasArg != nil);
+    miniopt_assert(optind != nil);
 
     *hasArg = 0;
     *optind = optctx.optsum;
+
+    if(beg == nil || end == nil) return 0;
+
     if (beg < end) {
         for (int i = 0; i < optctx.optsum; ++i) {
             if (miniopt_is_same(beg, end, optctx.opts[i].lname)) {
-                if (optctx.opts[i].type == opt_has_arg) *hasArg = 1;
+                *hasArg = miniopt_opt_has_arg(&(optctx.opts[i]));
                 *optind = i;
                 return 1;
             }
@@ -285,7 +307,7 @@ int miniopt_strlen(const char* s)
  * @brief Find char in string.
  * 
  * @param[in] str   Input string.
- * @param[in] c     Input char.
+ * @param[in] c     Input char, it should not be string terminator '\0'.
  * 
  * @return 1        Find ok.
  * @return 0        Find fail.
@@ -306,16 +328,13 @@ int miniopt_find(const char *str, char c) {
  * @return -1   Check fail. 
  */
 int miniopt_simple_check() {
+    dbg("check options begin...\n");
+
     for (int i = 0; i < optctx.optsum; ++i) {
-        if (optctx.opts[i].lname == NULL) {
-            miniopt_make_error("Option index = ", miniopt_to_string(i),
-                               ", option.lname cannot be NULL pointer.");
-            return -1;
-        }
-        if (optctx.opts[i].sname == 0 && optctx.opts[i].lname[0] == 0) {
+        if (optctx.opts[i].sname == nil && optctx.opts[i].lname == nil) {
             miniopt_make_error(
                 "Option index = ", miniopt_to_string(i),
-                ", both option.sname and option.lname cannot be empty.");
+                ", At least one of the short and long names cannot be nil.");
             return -1;
         }
         if (optctx.opts[i].sname == '-') {
@@ -330,7 +349,7 @@ int miniopt_simple_check() {
                 ", Character [=] cannot be used as short option.");
             return -1;
         }
-        if (optctx.opts[i].lname[0] == '-') {
+        if (optctx.opts[i].lname && optctx.opts[i].lname[0] == '-') {
             miniopt_make_error(
                 "Option index = ", miniopt_to_string(i),
                 ", Character [-] cannot be long option's first char.");
@@ -342,7 +361,15 @@ int miniopt_simple_check() {
                 ", Character [=] cannot be used in long option.");
             return -1;
         }
+        if(miniopt_strlen(optctx.opts[i].lname) > OPTION_NAME_MAX_SIZE){
+            miniopt_make_error(
+                "Option index = ", miniopt_to_string(i),
+                ", long name size cannot more than OPTION_NAME_MAX_SIZE.");
+            return -1; 
+        }
     }
+
+    dbg("check options pass.\n");
 
     return 0;
 }
@@ -360,8 +387,8 @@ int miniopt_simple_check() {
  */
 int miniopt_init_impl(int argc, char **argv, option *opts, int optsum) {
     miniopt_assert(argc > 0);
-    miniopt_assert(argv != NULL);
-    miniopt_assert(opts != NULL);
+    miniopt_assert(argv != nil);
+    miniopt_assert(opts != nil);
     miniopt_assert(optsum > 0);
 
     optctx.argc = argc;
@@ -371,12 +398,12 @@ int miniopt_init_impl(int argc, char **argv, option *opts, int optsum) {
     optctx.optsum = optsum;
 
     optctx.optind = optsum;
-    optctx.optarg = NULL;
-    optctx.error = NULL;
+    optctx.optarg = nil;
+    optctx.error = nil;
 
     optctx.index = -1;
-    optctx.token = NULL;
-    optctx.it = NULL;
+    optctx.token = nil;
+    optctx.it = nil;
     optctx.state = state_start;
 
     return miniopt_simple_check();
@@ -395,7 +422,7 @@ int miniopt_getopt_impl() {
     switch (optctx.state) {
         case state_start: {
             optctx.token = miniopt_get_next_token();
-            if (optctx.token == NULL) {
+            if (optctx.token == nil) {
                 optctx.state = state_finished;
                 break;
             } else if (optctx.token[0] == '-') {
@@ -426,7 +453,7 @@ int miniopt_getopt_impl() {
                                     " argument is missing.");
                                 return MINIOPT_ERROR;
                             }
-                        } else if (miniopt_peek_next_token() != NULL) {
+                        } else if (miniopt_peek_next_token() != nil) {
                             // "-x arg"
                             optctx.optarg = miniopt_get_next_token();
                             return MINIOPT_PASS;
@@ -440,7 +467,7 @@ int miniopt_getopt_impl() {
                         // (All) short option has no arg.
                         // "-x" equal to "-x"
                         // "-abc" equal to "-a -b -c"
-                        optctx.optarg = NULL;
+                        optctx.optarg = nil;
                         optctx.it = &(optctx.token[1]);
                         // Run into this state to split "-abc" to "-a -b -c".
                         optctx.state = state_short_opt_no_arg;
@@ -481,7 +508,7 @@ int miniopt_getopt_impl() {
                                             " argument is missing.");
                                         return MINIOPT_ERROR;
                                     }
-                                } else if (miniopt_peek_next_token() != NULL) {
+                                } else if (miniopt_peek_next_token() != nil) {
                                     // "--key value"
                                     optctx.optarg = miniopt_get_next_token();
                                     return MINIOPT_PASS;
@@ -494,7 +521,7 @@ int miniopt_getopt_impl() {
                             } else {
                                 if (*end == '\0') {
                                 // option like "--key" has no arg.
-                                    optctx.optarg = NULL;
+                                    optctx.optarg = nil;
                                     return MINIOPT_PASS;
                                 } else {
                                     miniopt_make_error(
@@ -529,7 +556,7 @@ int miniopt_getopt_impl() {
         case state_double_dash: {
             // All the tokens are non-option-argument;
             const char *optarg = miniopt_get_next_token();
-            if (optarg != NULL) {
+            if (optarg != nil) {
                 optctx.optarg = optarg;
                 optctx.optind = optctx.optsum;
                 return MINIOPT_PASS;
@@ -547,7 +574,7 @@ int miniopt_getopt_impl() {
                                             &optind) &&
                     needArg == 0) {
                     optctx.optind = optind;
-                    optctx.optarg = NULL;
+                    optctx.optarg = nil;
                     return MINIOPT_PASS;
                 } else {
                     miniopt_make_error("option ", optctx.token,
@@ -562,12 +589,12 @@ int miniopt_getopt_impl() {
         }
         case state_error: {
             optctx.optind = optctx.optsum;
-            optctx.optarg = NULL;
+            optctx.optarg = nil;
             return MINIOPT_ERROR;
         }
         case state_finished:
             optctx.optind = optctx.optsum;
-            optctx.optarg = NULL;
+            optctx.optarg = nil;
         default:
             break;
     }
@@ -594,11 +621,136 @@ int miniopt_optind_impl() {
  *
  * It should be used after (miniopt.getopt() > 0);
  *
- * @return not NULL     An argument.
- * @return NULL         Current option has no argument.
+ * @return not nil     An argument.
+ * @return nil         Current option has no argument.
  */
 const char *miniopt_optarg_impl() { 
     return optctx.optarg; 
+}
+
+void miniopt_print_desc(printf_fn printf_, const char* desc, int offset){
+    if(!desc) return;
+    
+    while(*desc){
+        if(*desc == '<' 
+           && *(desc+1) == 'b' 
+           && *(desc+2) == 'r' 
+           && *(desc+3) == '>'){
+            desc += 4;
+            printf_("\n");
+            for(int i = 0; i < offset; ++i){
+                printf_(" ");
+            }
+        }
+        else{
+            printf_("%c", *desc++);
+        }
+    }
+    
+    printf_("\n");
+}
+
+void miniopt_print_one_opt(printf_fn printf_,
+                           option* opt, 
+                           int maxShortOptSize, 
+                           int maxLongOptSize, 
+                           int maxAhintSize, 
+                           int offset,
+                           int indention){
+    int rest = offset;
+    for(int i = 0; i < indention; ++i){
+        printf_(" ");
+    }
+    
+    if(opt->sname != nil){
+        printf_("-%c", opt->sname);
+        rest -= 2;
+    }
+    else if(maxShortOptSize)
+    {
+        for(int i = 0; i < maxShortOptSize; ++i){
+            printf_(" ");
+        }
+        rest -= maxShortOptSize;
+    }
+    
+    if(maxShortOptSize && maxLongOptSize){
+        printf_(" ");
+        rest -= 1;
+    }
+
+    if(opt->lname != nil){
+        printf_("--%s", opt->lname);
+        rest -= miniopt_strlen(opt->lname) + 2;
+    }
+    
+    if(opt->ahint != nil){
+        printf_(" %s", opt->ahint);
+        rest -= miniopt_strlen(opt->ahint) + 1;
+    }
+    
+    rest -= indention;
+    while(rest > 0){
+        printf_(" ");
+        --rest;
+    }
+
+    miniopt_print_desc(printf_, opt->desc, offset);
+}
+
+
+void miniopt_internal_print_opts(printf_fn printf_, 
+                                 option* opts, 
+                                 int optsum, 
+                                 int indention){
+    int maxShortOptSize = 0;
+    int maxLongOptSize = 0;
+    int maxAhintSize = 0;
+    int offset = 0;     // offset to opt.desc.
+
+    for(int i = 0; i < optsum; ++i){
+        int total = 0;
+
+        int shortOptSize = opts[i].sname ? 1 : 0;
+        if(maxShortOptSize < shortOptSize){
+            shortOptSize += 1;  // For the leading '-'
+            maxShortOptSize = shortOptSize;
+            total += shortOptSize;
+        }
+
+        int longOptSize = miniopt_strlen(opts[i].lname);
+        if(maxLongOptSize < longOptSize){
+            longOptSize += 2;  // For the leading '--'
+            maxLongOptSize = longOptSize;
+            total += longOptSize;
+        }
+
+        int ahintSize = miniopt_strlen(opts[i].ahint);
+        if(maxAhintSize < ahintSize){
+            ahintSize += 1; // For the leading ' '
+            maxAhintSize = ahintSize;
+            total += ahintSize;
+        }
+        if(offset < total){
+            offset = total;
+        }
+    }
+    
+    offset += indention;
+    // Add space between short name and long name like "-k --key".
+    if(maxShortOptSize && maxLongOptSize) offset += 1;
+    // Add spaces before opt.desc
+    offset += 3;
+    
+    for(int i = 0; i < optsum; ++i){
+        miniopt_print_one_opt(printf_,
+                              &opts[i], 
+                              maxShortOptSize, 
+                              maxLongOptSize, 
+                              maxAhintSize, 
+                              offset,
+                              indention);
+    }
 }
 
 /**
@@ -607,46 +759,18 @@ const char *miniopt_optarg_impl() {
  * @param[in] indention     Indention at the line beginning.
  */
 void miniopt_printopts_impl(printf_fn printf_, int indention){
-    if(printf_ == NULL || optctx.opts == NULL) return;
-
-    int max = 0;
-    for(int i = 0; i < optctx.optsum; ++i)
-    {
-        int len = miniopt_strlen(optctx.opts[i].lname);
-        if(max < len) max = len;
-    }
-
-    for(int i = 0; i < optctx.optsum; ++i)
-    {
-        for(int j = 0; j < indention; ++j) printf_(" ");
-
-        if(optctx.opts[i].sname){
-            printf_("-%c,", optctx.opts[i].sname);
-        }else{
-            printf_("   ");
-        }
-
-        int align = max + 1;
-        if(optctx.opts[i].lname && optctx.opts[i].lname[0] != 0){
-            printf_("--%s", optctx.opts[i].lname);
-            align -= miniopt_strlen(optctx.opts[i].lname);
-            while(align-- > 0) printf_(" ");
-        }else{
-            align += 2;
-            while(align-- > 0) printf_(" ");
-        }
-
-        if(optctx.opts[i].desc) {
-            printf_("%s\n", optctx.opts[i].desc);
-        }
-    }
+    if(printf_ == nil || optctx.opts == nil) return;
+    miniopt_internal_print_opts(printf_,
+                                optctx.opts, 
+                                optctx.optsum, 
+                                indention);
 }
 
 /**
  * @brief Get current error str.
  *
- * @return not NULL     An erro str.
- * @return NULL         No error.
+ * @return not nil     An erro str.
+ * @return nil         No error.
  */
 const char *miniopt_what_impl() { 
     return optctx.error; 

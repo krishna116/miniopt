@@ -7,6 +7,10 @@
  * file that was distributed with this source code.
  */
 
+/**
+ * @brief miniopt library include file.
+ */
+
 #pragma once
 
 //
@@ -23,35 +27,36 @@
 extern "C" {
 #endif
 
-/**
- * @brief Option type.
- * 
- */
-#define opt_no_arg 0     ///< Option has no argument.
-#define opt_has_arg 1    ///< Option has an argument.
+#define nil 0   ///< It means a char or string is not exist or not used.
+#define OPTION_NAME_MAX_SIZE 32
+#define ERROR_STR_MAX_SIZE 128
 
 /**
  * @brief Option.
  * 
  * Some rules to make things clear:
+ * - At least one of the short and long names should exist.
  * 
- * - If option has no short name, make it empty(option.sname = '\0').
- * - If option has no long name, make it empty(option.lname = "").
- * - Either option.sname or option.lname cannot be empty in an option.
+ * - If the short name is not used, make it nil.
+ * - If the short name is used, it cannot be '-' or '='.
  * 
- * - If option.sname used, it cannot be character '-' or '='.
- * - If option.lname used, its length ought to no less than 2.
- * - If option.lname used, it cannot begin with character '-'.
- * - If option.lname used, it cannot use character '='.
+ * - If the long name is not used, make it nil.
+ * - If the long name is used:
+ *   - it cannot begin with '-' or '='.
+ *   - it cannot use character '='.
+ *   - its string length cannot more than OPTION_NAME_MAX_SIZE.
  * 
- * - It is user's responsibility to make sure no duplicated options 
- *   in an option array.
+ * - If option.ahint is nill, it means the option has no argument.
+ * - If option.ahint is not nill, it means the option has an argument.
+ * - No option argument is always provided to user if it exists.
+ * 
+ * - If you need line break in the option.desc, use "<br>" to insert new line.
  */
 typedef struct option_ {
-    const char sname;     ///< Option short name;
-    const char *lname;    ///< Option long name;
-    const char *desc;     ///< Option description;
-    int type;             ///< Option type.
+    const char sname;     ///< Short name;
+    const char *lname;    ///< Long name;
+    const char *ahint;    ///< Argument hint;
+    const char *desc;     ///< Description;
 } option;
 
 /**
@@ -128,9 +133,7 @@ typedef const char *(*miniopt_what)();
  * @brief Miniopt class.
  */
 typedef struct Miniopt_ {
-//
-// Public api:
-//
+// Public:
     miniopt_init        init;       ///< Initialize miniopt object.
     miniopt_getopt      getopt;     ///< Get next option.
     miniopt_optind      optind;     ///< Get current option index.
