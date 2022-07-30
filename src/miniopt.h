@@ -27,7 +27,7 @@
 extern "C" {
 #endif
 
-#define nil 0   ///< It means a char or string is not exist or not used.
+#define nil 0   // It means a char or string is not exist or not used.
 #define OPTION_NAME_MAX_SIZE 32
 #define ERROR_STR_MAX_SIZE 128
 
@@ -46,8 +46,8 @@ extern "C" {
  *   - it cannot use character '='.
  *   - its string length cannot more than OPTION_NAME_MAX_SIZE.
  * 
- * - If option.ahint is nill, it means the option has no argument.
- * - If option.ahint is not nill, it means the option has an argument.
+ * - If option.ahint is nil, it means the option has no argument.
+ * - If option.ahint is not nil, it means the option has an argument.
  * - No option argument is always provided to user if it exists.
  * 
  * - If you need line break in the option.desc, use "<br>" to insert new line.
