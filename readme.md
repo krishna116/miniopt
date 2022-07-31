@@ -131,9 +131,13 @@ const char* miniopt.what();
     $> rm -- -f    ## but you can delete the file by this command.
     ```
 
-# Code generator
-There is an experimental **code generator** can be used to generate the code automatically.  
-The document is [here](./tool/readme.md).
+# The code generator
+There is an experimental **code generator** can be used to generate the code automatically. You can run follow commands to build it, and the document is [here](./tool/readme.md).
+```bash
+> cmake -S . -B build
+> cmake --build build
+``` 
+
 
 # References  
  
