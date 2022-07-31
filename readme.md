@@ -131,6 +131,10 @@ const char* miniopt.what();
     $> rm -- -f    ## but you can delete the file by this command.
     ```
 
+# Code generator
+There is an experimental **code generator** can be used to generate the code automatically.  
+The document is [here](./tool/readme.md).
+
 # References  
  
 https://pubs.opengroup.org/onlinepubs/9699919799/basedefs/V1_chap12.html  
