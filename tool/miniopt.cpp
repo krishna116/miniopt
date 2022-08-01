@@ -13,6 +13,7 @@
 
 #include "config.h"
 #include "miniopt.h"
+#include "packres.h"
 
 #include <string>
 #include <iostream>
@@ -456,8 +457,13 @@ int GenCode(const std::string &in, const std::string &out) {
 int ParseArgs(int argc, char *argv[]) {
     std::string in;
     std::string out;
+    std::string dir;
 
-    option options[] = {{'o', "out", "<file>", "specify output filename."},
+    option options[] = {{'o', "out", "<file>", "specify output file name "
+                                               "for the generated code."
+                        },
+                        {'e', "export", "<dir>", "specify directory to export "
+                                                 "miniopt library files."},
                         {'h', "help", nil, "show help."},
                         {'v', "version", nil, "show version."}};
     const int optsum = sizeof(options) / sizeof(options[0]);
@@ -474,10 +480,13 @@ int ParseArgs(int argc, char *argv[]) {
             case 0:    // -o, --out <file>
                 out = miniopt.optarg();
                 break;
-            case 1:    // -h, --help
+            case 1:    // -e, --export <dir>
+                dir = miniopt.optarg();
+                break;
+            case 2:    // -h, --help
                 std::cout << config::HelpStr << std::endl;
                 return 0;
-            case 2:    // -v, --version
+            case 3:    // -v, --version
                 std::cout << config::VersionStr << std::endl;
                 return 0;
             default:
@@ -488,7 +497,12 @@ int ParseArgs(int argc, char *argv[]) {
 
     if (status < 0) printf("error: %s\n", miniopt.what());
 
-    return GenCode(in, out);
+    status = GenCode(in, out);
+    if(status == 0 && !dir.empty()){
+        status = packres::output(dir.c_str());
+    }
+
+    return status;
 }
 
 int main(int argc, char *argv[]) { 
