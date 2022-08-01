@@ -16,14 +16,15 @@ namespace config{
     constexpr auto VersionPatch = ${PROJECT_VERSION_PATCH};
     constexpr auto VersionStr   = "${PROJECT_NAME} version ${PROJECT_VERSION}";
 
-    constexpr auto HelpStr      = R"(${PROJECT_NAME} [option] <file>
+    constexpr auto HelpStr      = R"(${PROJECT_NAME} [options] <file>
 
 It is a code generator for command line options.
 
 Options:
-  -o --out <file>   specify output filename.
-  -h --help         show help.
-  -v --version      show version.)";
+  -o --out <file>     specify output file name for the generated code.
+  -e --export <dir>   specify directory to export miniopt library files.
+  -h --help           show help.
+  -v --version        show version.)";
 
 namespace code{
     constexpr auto TimeStamp = "{:TimeStamp:}";
