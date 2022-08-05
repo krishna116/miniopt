@@ -104,19 +104,51 @@ Result LineToOptInfo(const std::string &line, OptInfo &optInfo,
     // -k --key=<value3>    some description 3...
     // -k --key <value4>    some description 4...
     static const std::regex re1(msp d1 ck hsoc d2 ckey heos cv hsp cd);
+
     // -k,--key             some description 1...
     static const std::regex re1b(msp d1 ck hsoc d2 ckey hsp cd);
+
+    // -k,--key=<value1> 
+    // -k,--key <value2> 
+    // -k --key=<value3> 
+    // -k --key <value4> 
+    static const std::regex re1c(msp d1 ck hsoc d2 ckey heos cv msp);
+
+    // -k,--key 
+    static const std::regex re1d(msp d1 ck hsoc d2 ckey msp);
+
     // --key=<val>          some description 1...
     // --key <val>          some description 2...
     static const std::regex re2(msp d2 ckey heos cv hsp cd);
+
+    // --key=<val> 
+    // --key <val> 
+    static const std::regex re2b(msp d2 ckey heos cv msp);
+
+    // --key                some description 2...
+    static const std::regex re2c(msp d2 ckey hsp cd);
+
+    // --key 
+    static const std::regex re2d(msp d2 ckey msp);
+
     // -k<val>              some description 1...
     // -k=<val>             some description 2...
     // -k <val>             some description 3...
     static const std::regex re3(msp d1 ck meos cv hsp cd);
+
+    // -k<val> 
+    // -k=<val> 
+    // -k <val> 
+    static const std::regex re3b(msp d1 ck meos cv msp);
+
     // -k                   some description ...
-    static const std::regex re4(msp d1 ck hsp cd);
+    static const std::regex re3c(msp d1 ck hsp cd);
+
+    // -k 
+    static const std::regex re3d(msp d1 ck msp);
+
     // -any str begin with '-' but do not matched....
-    static const std::regex re5(msp d1 cd);
+    static const std::regex reZZ(msp d1 cd);
 
     if (IsEmpty(line)){
         return Result::empty;
@@ -142,20 +174,44 @@ Result LineToOptInfo(const std::string &line, OptInfo &optInfo,
         optInfo.shortName = match[1].str();
         optInfo.longName = match[2].str();
         optInfo.descList.push_back(match[3].str());
+    } else if (std::regex_match(line, match, re1c)) {
+        optInfo.shortName = match[1].str();
+        optInfo.longName = match[2].str();
+        optInfo.argHint = match[3].str();
+        checkOptInfo();
+    } else if (std::regex_match(line, match, re1d)) {
+        optInfo.shortName = match[1].str();
+        optInfo.longName = match[2].str();
     } else if (std::regex_match(line, match, re2)) {
         optInfo.longName = match[1].str();
         optInfo.argHint = match[2].str();
         optInfo.descList.push_back(match[3].str());
         checkOptInfo();
+    } else if (std::regex_match(line, match, re2b)) {
+        optInfo.longName = match[1].str();
+        optInfo.argHint = match[2].str();
+        checkOptInfo();
+    } else if (std::regex_match(line, match, re2c)) {
+        optInfo.longName = match[1].str();
+        optInfo.descList.push_back(match[3].str());
+    } else if (std::regex_match(line, match, re2d)) {
+        optInfo.longName = match[1].str();
     } else if (std::regex_match(line, match, re3)) {
         optInfo.shortName = match[1].str();
         optInfo.argHint = match[2].str();
         optInfo.descList.push_back(match[3].str());
         checkOptInfo();
-    } else if (std::regex_match(line, match, re4)) {
+    } else if (std::regex_match(line, match, re3b)) {
+        optInfo.shortName = match[1].str();
+        optInfo.argHint = match[2].str();
+        checkOptInfo();
+    } else if (std::regex_match(line, match, re3c)) {
         optInfo.shortName = match[1].str();
         optInfo.descList.push_back(match[2].str());
-    } else if (std::regex_match(line, match, re5)) {
+    } else if (std::regex_match(line, match, re3d)) {
+        optInfo.shortName = match[1].str();
+    }
+    else if (std::regex_match(line, match, reZZ)) {
         result = Result::unmatched;
     }
     else{
@@ -353,13 +409,17 @@ int OptInfoArrayToCode(const OptInfoArray &OptInfoArray,
             opt += ", ";
             opt += itemToStr(it->argHint);
             opt += ", ";
-            for (auto it2 = it->descList.begin(); it2 != it->descList.end();
-                 ++it2) {
-                opt += "\"" + *it2;
-                if (it2 + 1 != it->descList.end()) { 
-                    opt += "<br>";
+            if(it->descList.empty()){
+                opt += "\"\"";
+            }else{
+                for (auto it2 = it->descList.begin(); it2 != it->descList.end();
+                    ++it2) {
+                    opt += "\"" + *it2;
+                    if (it2 + 1 != it->descList.end()) { 
+                        opt += "<br>";
+                    }
+                    opt += "\"";
                 }
-                opt += "\"";
             }
             opt += "}";
             if (it + 1 != OptInfoArray.end()) opt += ",\n";
